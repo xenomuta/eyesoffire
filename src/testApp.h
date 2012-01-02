@@ -4,7 +4,7 @@
 #include "chispa.h"
 #include "ofxOpenCv.h"
 
-#define MAX_CHISPA 10000
+#define MAX_CHISPA 5000
 
 class testApp : public ofBaseApp{
 

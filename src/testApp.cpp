@@ -4,7 +4,8 @@ static int turn = 0, lapsus;
 static bool ready = false;
 
 void testApp::fireAt(int x, int y, int a) {
-  for (int i = 0; i < a / 50; i++) {
+  int densidad = 20; //50;
+  for (int i = 0; i < a / densidad; i++) {
     for (int f = 0; f < MAX_CHISPA; f++)
       if (fuego[f].v <= 0) {
         fuego[f].init(x, y);
@@ -58,18 +59,17 @@ void testApp::draw(){
   ofScale(2, 2, 1);
   ofEnableAlphaBlending();
   ofFill();
-  ofSetColor(0xff, 0xff, 0xff, turn > 1 ? 0x7f : 0x2f);
+  ofSetColor(0xff, 0xff, 0xff, turn > 1 ? 0x4f : 0x2f);
   haarImg.draw(0,0);
 
   for(int i = 0; i < MAX_CHISPA; i++) fuego[i].update();
-
-/*
+  /*
   ofSetColor(255, 255, 255, 32);
   for(int i = 0; i < haarFinder.blobs.size(); i++) {
     ofRectangle cur = haarFinder.blobs[i].boundingRect;
     ofEllipse(cur.x + cur.width / 2, cur.y + cur.height / 2, cur.width * 1.3, cur.height );
   }
-*/
+  */
   if (turn == 0) {
     ofSetHexColor(0x00ff00);
     font1.drawString("XenoMuta", 40, 100);
@@ -78,7 +78,7 @@ void testApp::draw(){
   }
   if (turn == 1) {
     ofSetHexColor(0x00ff00);
-    font2.drawString("http://github.com/xenomuta/ojosdefuego", 20, 210);
+    font2.drawString("https://github.com/xenomuta/eyesoffire", 20, 210);
   }
 
   ofDisableAlphaBlending();
