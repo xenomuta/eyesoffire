@@ -1,4 +1,6 @@
 src/.*.swp
+src/*.orig
 bin/libs/
+bin/eyesoffire
 bin/theFireInYourEyes
 obj/
