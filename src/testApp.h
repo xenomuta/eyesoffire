@@ -32,5 +32,8 @@ class testApp : public ofBaseApp{
 
     ofxCvHaarFinder 	haarFinder;
     chispa *fuego;
+
+    ofVideoPlayer     player;
+    ofImage           movieImg;
 };
 

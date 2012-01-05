@@ -4,7 +4,7 @@ static int turn = 0, lapsus;
 static bool ready = false;
 
 void testApp::fireAt(int x, int y, int a) {
-  for (int i = 0; i < a / 50; i++) {
+  for (int i = 0; i < a / 100; i++) {
     for (int f = 0; f < MAX_CHISPA; f++)
       if (fuego[f].v <= 0) {
         fuego[f].init(x, y);
@@ -19,6 +19,12 @@ void testApp::setup(){
   ofSeedRandom();
   ofEnableSmoothing();
   ofTrueTypeFont::setGlobalDpi(72);
+
+  player.loadMovie("fire.avi");
+  player.setLoopState(OF_LOOP_NORMAL);//PALINDROME);
+  player.play();
+  movieImg.allocate(320,240,OF_IMAGE_COLOR);
+
   lapsus = time(NULL);
   font1.loadFont("pee-on-your-face.ttf", 26, true, true);
   font2.loadFont("charbb_reg.ttf", 20, true, true);
@@ -37,6 +43,11 @@ void testApp::update(){
     //if (turn == 2) ofSetBackgroundAuto(false);
     lapsus = time(NULL);
   }
+  player.idleMovie();
+  if (player.isFrameNew()) {
+    movieImg.setFromPixels(player.getPixels(), 320, 240, OF_IMAGE_COLOR, true);
+  }
+
   vidGrabber.grabFrame();
   if (vidGrabber.isFrameNew()) {
     ready = true;
@@ -57,10 +68,12 @@ void testApp::draw(){
   ofTranslate(20, 20, 1);
   ofScale(2, 2, 1);
   ofEnableAlphaBlending();
-  ofFill();
+  ofSetColor(0xff, 0xff, 0xff, 0x2f);
+  movieImg.draw(0,0);
   ofSetColor(0xff, 0xff, 0xff, turn > 1 ? 0x7f : 0x2f);
   haarImg.draw(0,0);
 
+  ofFill();
   for(int i = 0; i < MAX_CHISPA; i++) fuego[i].update();
 
 /*
@@ -72,13 +85,13 @@ void testApp::draw(){
 */
   if (turn == 0) {
     ofSetHexColor(0x00ff00);
-    font1.drawString("XenoMuta", 40, 100);
+    font1.drawString("XenoMuta.com", 40, 100);
     ofSetHexColor(0xff0000);
     font2.drawString("\"Eyes of Fire\"", 40, 120);
   }
   if (turn == 1) {
     ofSetHexColor(0x00ff00);
-    font2.drawString("http://github.com/xenomuta/ojosdefuego", 20, 210);
+    font2.drawString("http://github.com/xenomuta/eyesoffire", 20, 210);
   }
 
   ofDisableAlphaBlending();
