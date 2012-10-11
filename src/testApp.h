@@ -1,10 +1,8 @@
 #pragma once
 
 #include "ofMain.h"
-#include "chispa.h"
 #include "ofxOpenCv.h"
-
-#define MAX_CHISPA 5000
+#include "./mimita.h"
 
 class testApp : public ofBaseApp{
 
@@ -23,17 +21,17 @@ class testApp : public ofBaseApp{
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);		
 
-    void fireAt(int x, int y, int a);
+		// mimitas ( particle system )
+		vector<mimita>			mimitas;
+		// particle sprite
+		ofImage							mimitaImg;
 
-		ofVideoGrabber 		vidGrabber;
-    ofxCvColorImage   colorImg;
-    ofImage           haarImg;
-    ofTrueTypeFont    font1, font2;
+		// Haar features finder
+    ofxCvHaarFinder			haarFinder;
+		// Frame Image
+		ofImage							haarImg;
+    // Camera
+		ofVideoGrabber 			vidGrabber;
 
-    ofxCvHaarFinder 	haarFinder;
-    chispa *fuego;
-
-    ofVideoPlayer     player;
-    ofImage           movieImg;
 };
 

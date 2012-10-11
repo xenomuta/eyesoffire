@@ -1,127 +1,112 @@
 #include "testApp.h"
 
-static int turn = 0, lapsus;
-static bool ready = false;
-
-void testApp::fireAt(int x, int y, int a) {
-  for (int i = 0; i < a / 100; i++) {
-    for (int f = 0; f < MAX_CHISPA; f++)
-      if (fuego[f].v <= 0) {
-        fuego[f].init(x, y);
-        break;
-      }
-  }
-}
+#define COLOR_SHIFT_TIMEOUT 2000
+#define BACKGROUND_TIMEOUT 500
 
 void testApp::setup(){
-  ofBackground(0);
-  ofSetFrameRate(24);
-  ofSeedRandom();
-  ofEnableSmoothing();
-  ofTrueTypeFont::setGlobalDpi(72);
+  mimitaImg.loadImage("brush.png");
+  mimitaImg.resize(8, 32);
 
-  player.loadMovie("fire.avi");
-  player.setLoopState(OF_LOOP_NORMAL);//PALINDROME);
-  player.play();
-  movieImg.allocate(320,240,OF_IMAGE_COLOR);
-
-  lapsus = time(NULL);
-  font1.loadFont("pee-on-your-face.ttf", 26, true, true);
-  font2.loadFont("charbb_reg.ttf", 20, true, true);
   vidGrabber.setVerbose(true);
   vidGrabber.initGrabber(320,240);
+
+  haarImg.allocate(320, 240, OF_IMAGE_COLOR);
   haarFinder.setup("haarcascade_eye_tree_eyeglasses.xml");
-  haarImg.allocate(320,240,OF_IMAGE_COLOR);
-  fuego = new chispa[MAX_CHISPA];
-  for (int i = 0; i < MAX_CHISPA; i++) fuego[i].v = 0;
 }
 
 void testApp::update(){
-  if (!ready) lapsus = time(NULL);
-  if (time(NULL) - lapsus > 5 && turn < 2) {
-    turn++;
-    //if (turn == 2) ofSetBackgroundAuto(false);
-    lapsus = time(NULL);
-  }
-  player.idleMovie();
-  if (player.isFrameNew()) {
-    movieImg.setFromPixels(player.getPixels(), 320, 240, OF_IMAGE_COLOR, true);
-  }
-
-  vidGrabber.grabFrame();
-  if (vidGrabber.isFrameNew()) {
-    ready = true;
+	vidGrabber.grabFrame();
+	if (vidGrabber.isFrameNew()) {
     haarImg.setFromPixels(vidGrabber.getPixels(), 320, 240, OF_IMAGE_COLOR, true);
     haarImg.mirror(false, true);
     haarFinder.findHaarObjects(haarImg);
 
-    for(int i = 0; i < haarFinder.blobs.size(); i++) {
-      ofRectangle cur = haarFinder.blobs[i].boundingRect;
-      fireAt(cur.x + cur.width / 2, cur.y + cur.height / 2, cur.width * cur.height);
-    }
+  }
 
+  // Inicia mimitas en posicion de los ojos
+  for(int i = 0; i < (int)haarFinder.blobs.size(); i++) {
+    ofRectangle cur = haarFinder.blobs[i].boundingRect;
+    for (int o = 0; o < haarFinder.blobs[i].area / 2; o++) {
+      mimita m;
+      float y = (haarFinder.blobs[i].centroid.y - ((o / (haarFinder.blobs[i].area / 2)) * ofRandom(-3, -10)));
+      m.inicia(ofPoint(haarFinder.blobs[i].centroid.x, y));
+      mimitas.push_back(m);
+    }
   }
 }
 
 void testApp::draw(){
   ofPushMatrix();
-  ofTranslate(20, 20, 1);
-  ofScale(2, 2, 1);
-  ofEnableAlphaBlending();
-  ofSetColor(0xff, 0xff, 0xff, 0x2f);
-  movieImg.draw(0,0);
-  ofSetColor(0xff, 0xff, 0xff, turn > 1 ? 0x7f : 0x2f);
-  haarImg.draw(0,0);
+  ofScale(3, 3, 1);
+  ofEnableAlphaBlending();  
+  ofSetHexColor(0xffffff);  
+  haarImg.draw(0, 0);
 
-  ofFill();
-  for(int i = 0; i < MAX_CHISPA; i++) fuego[i].update();
-
-/*
-  ofSetColor(255, 255, 255, 32);
-  for(int i = 0; i < haarFinder.blobs.size(); i++) {
-    ofRectangle cur = haarFinder.blobs[i].boundingRect;
-    ofEllipse(cur.x + cur.width / 2, cur.y + cur.height / 2, cur.width * 1.3, cur.height );
+  // mimitas
+  ofEnableBlendMode(OF_BLENDMODE_ADD);
+  for (int i = 0; i < (int)mimitas.size(); i++) {    
+    ofVec3f m = mimitas[i].actualiza();
+    if (m.z < 0 || !ofInRange(m.x, -32, 352) || !ofInRange(m.y, -32, 273))
+      mimitas.erase(mimitas.begin() + i);
+    float hl = (1- m.z) / .35;
+    hl = hl > 1 ? 1 : hl;
+    if (ofRandomf()<.0001 || m.z < .0015) {
+      ofSetColor(ofColor(255, 0, 0, 16).lerp(ofColor(255, 255, 0, 16), ofRandom(0, .45)));
+      mimitaImg.draw(m.x - 2, m.y - 10, 2, ofRandom(5,20));
+    } else {    
+      ofColor mixColor = ofColor(255,255,255,32).lerp(ofColor(255, 255, 0, 32).lerp(ofColor(255, 0, 0, 32), .5 / m.z), hl);
+      ofSetColor(mixColor);
+      if (hl < 1 && ofRandomf() > .7) mimitaImg.draw(m.x - 16, m.y - 10, 32, 20);
+      else mimitaImg.draw(m.x, m.y);
+    }
   }
-*/
-  if (turn == 0) {
-    ofSetHexColor(0x00ff00);
-    font1.drawString("XenoMuta.com", 40, 100);
-    ofSetHexColor(0xff0000);
-    font2.drawString("\"Eyes of Fire\"", 40, 120);
+  for(int i = 0; i < (int)haarFinder.blobs.size(); i++) {
+    float x = haarFinder.blobs[i].centroid.x, y = haarFinder.blobs[i].centroid.y;
+    ofSetColor(255, 0, 0, 128);
+    mimitaImg.draw(x - 10, y - 10, 20, 20);
   }
-  if (turn == 1) {
-    ofSetHexColor(0x00ff00);
-    font2.drawString("http://github.com/xenomuta/eyesoffire", 20, 210);
-  }
-
-  ofDisableAlphaBlending();
- 
   ofPopMatrix();
 }
 
 void testApp::keyPressed(int key){
+
 }
 
 void testApp::keyReleased(int key){
+
 }
 
+//--------------------------------------------------------------
 void testApp::mouseMoved(int x, int y ){
+
 }
 
+//--------------------------------------------------------------
 void testApp::mouseDragged(int x, int y, int button){
+
 }
 
+//--------------------------------------------------------------
 void testApp::mousePressed(int x, int y, int button){
+
 }
 
+//--------------------------------------------------------------
 void testApp::mouseReleased(int x, int y, int button){
+
 }
 
+//--------------------------------------------------------------
 void testApp::windowResized(int w, int h){
+
 }
 
+//--------------------------------------------------------------
 void testApp::gotMessage(ofMessage msg){
+
 }
 
+//--------------------------------------------------------------
 void testApp::dragEvent(ofDragInfo dragInfo){ 
+
 }
